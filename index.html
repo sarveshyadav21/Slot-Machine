@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slot Machine Simulator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #222;
+            color: white;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        .slot-machine {
+            background-color: red;
+            border: 5px solid #fff;
+            width: 300px;
+            padding: 20px;
+            margin: 50px auto;
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .reels {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+        }
+
+        .reel {
+            width: 80px;
+            height: 80px;
+            background-color: #fff;
+            border: 2px solid #333;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            font-size: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .reel-content {
+            position: absolute;
+            top: 0;
+            transition: top 2s ease-in-out;
+        }
+
+        .reel-content div {
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 50px;
+        }
+
+        button {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+
+        #score {
+            position: absolute;
+            top: -25px;
+            right: 10px;
+            background-color: #333;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        #fireworks {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="slot-machine">
+        <h1>Slot Machine</h1>
+        <div id="score">Score: 0</div>
+        <div class="reels">
+            <div class="reel" id="reel1">
+                <div class="reel-content"></div>
+            </div>
+            <div class="reel" id="reel2">
+                <div class="reel-content"></div>
+            </div>
+            <div class="reel" id="reel3">
+                <div class="reel-content"></div>
+            </div>
+        </div>
+        <button id="spinButton">Spin</button>
+        <button id="resetButton">Reset</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        let score = 0;
+        let spinning = false;
+
+        document.getElementById('spinButton').addEventListener('click', spin);
+        document.getElementById('resetButton').addEventListener('click', reset);
+
+        const reel1Symbols = ['🍎', '🍌', '🍇', '🍒', '🍉'];
+        const reel2Symbols = ['⭐', '💎', '🔔', '🍀', '🎰'];
+        const reel3Symbols = ['7️⃣', '3️⃣', '5️⃣', '2️⃣', '9️⃣'];
+
+        function getRandomSymbol(reelSymbols) {
+            return reelSymbols[Math.floor(Math.random() * reelSymbols.length)];
+        }
+
+        function spin() {
+            if (spinning) return;
+            spinning = true;
+
+            const reel1 = document.getElementById('reel1').querySelector('.reel-content');
+            const reel2 = document.getElementById('reel2').querySelector('.reel-content');
+            const reel3 = document.getElementById('reel3').querySelector('.reel-content');
+
+            // Populate reels with multiple symbols for rolling effect
+            const symbols1 = reel1Symbols.concat(reel1Symbols, reel1Symbols);
+            const symbols2 = reel2Symbols.concat(reel2Symbols, reel2Symbols);
+            const symbols3 = reel3Symbols.concat(reel3Symbols, reel3Symbols);
+
+            reel1.innerHTML = symbols1.map(symbol => `<div>${symbol}</div>`).join('');
+            reel2.innerHTML = symbols2.map(symbol => `<div>${symbol}</div>`).join('');
+            reel3.innerHTML = symbols3.map(symbol => `<div>${symbol}</div>`).join('');
+
+            // Reset position and start rolling animation
+            const height = 80; // height of one reel
+            const duration = 2; // duration in seconds
+
+            reel1.style.top = '0';
+            reel2.style.top = '0';
+            reel3.style.top = '0';
+
+            setTimeout(() => {
+                reel1.style.top = `-${height * symbols1.length}px`;
+                reel2.style.top = `-${height * symbols2.length}px`;
+                reel3.style.top = `-${height * symbols3.length}px`;
+            }, 10); // Small delay to ensure top reset before animating
+
+            setTimeout(() => {
+                const finalSymbol1 = getRandomSymbol(reel1Symbols);
+                const finalSymbol2 = getRandomSymbol(reel2Symbols);
+                const finalSymbol3 = getRandomSymbol(reel3Symbols);
+
+                reel1.innerHTML = `<div>${finalSymbol1}</div>`;
+                reel2.innerHTML = `<div>${finalSymbol2}</div>`;
+                reel3.innerHTML = `<div>${finalSymbol3}</div>`;
+
+                checkWinner(finalSymbol1, finalSymbol2, finalSymbol3);
+                spinning = false;
+            }, (duration + 0.1) * 1000); // Adjust the timeout to ensure animation completion
+        }
+
+        function checkWinner(s1, s2, s3) {
+            const resultElement = document.getElementById('result');
+            if (s1 === s2 && s2 === s3) {
+                resultElement.innerHTML = '🎉 Jackpot! You won a huge prize! 🎉';
+                showFireworks();
+                score += 100;
+            } else if (s1 === s2 || s2 === s3 || s1 === s3) {
+                resultElement.innerHTML = 'You won a small prize!';
+                score += 10;
+            } else {
+                resultElement.innerHTML = 'Sorry, try again!';
+            }
+
+            document.getElementById('score').innerHTML = `Score: ${score}`;
+        }
+
+        function showFireworks() {
+            const fireworks = document.createElement('div');
+            fireworks.id = 'fireworks';
+            fireworks.innerHTML = '<img src="https://media.giphy.com/media/l0ExvG6tTHDwEmfGM/giphy.gif" alt="Fireworks">';
+            document.body.appendChild(fireworks);
+            fireworks.style.display = 'block';
+
+            setTimeout(() => {
+                fireworks.style.display = 'none';
+                document.body.removeChild(fireworks);
+            }, 3000);
+        }
+
+        function reset() {
+            score = 0;
+            document.getElementById('score').innerHTML = `Score: ${score}`;
+            document.getElementById('result').innerHTML = '';
+            document.getElementById('reel1').querySelector('.reel-content').innerHTML = '';
+            document.getElementById('reel2').querySelector('.reel-content').innerHTML = '';
+            document.getElementById('reel3').querySelector('.reel-content').innerHTML = '';
+        }
+    </script>
+</body>
+</html>
